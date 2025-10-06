@@ -34,12 +34,7 @@ function PCBFrontend() {
     <div className="my-4 p-4">
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-2">
-        <h5>Bajaj Electronics</h5>
-        <div>
-          <span className="me-2">Active User</span>
-          <strong className="me-2">Admin</strong>
-          <span className="text-success">ONLINE</span>
-        </div>
+        <h5>Atomberg</h5>
       </div>
 
       {/* Find PCB Section (now "Lot no.") */}
