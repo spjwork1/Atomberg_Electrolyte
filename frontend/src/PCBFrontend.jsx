@@ -3,6 +3,17 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 function PCBFrontend() {
   const [activeTab, setActiveTab] = useState('tagentry');
+  const [lotNumber, setLotNumber] = useState('');
+  const [partCode, setPartCode] = useState('');
+
+  // Handle input changes
+  const handleLotNumberChange = (e) => {
+    setLotNumber(e.target.value);
+  };
+
+  const handlePartCodeChange = (e) => {
+    setPartCode(e.target.value);
+  };
 
   // In production, suggestions would come from previously entered user data or a backend
   // Here, keep suggestion arrays empty (no option elements rendered)
@@ -20,7 +31,7 @@ function PCBFrontend() {
   };
 
   return (
-    <div className="container my-4 p-4 bg-white">
+    <div className="my-4 p-4">
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-2">
         <h5>Bajaj Electronics</h5>
@@ -35,18 +46,21 @@ function PCBFrontend() {
       <form className="row align-items-end mb-3">
         <div className="col-md-3">
           <label className="form-label">Lot no.</label>
-          <input className="form-control" list="lotNumbers" placeholder="" />
-          <datalist id="lotNumbers">
-            {/* Render options only if array is populated */}
-            {suggestions.lotNumbers.map(option => <option key={option} value={option} />)}
-          </datalist>
+          <input 
+            className="form-control" 
+            placeholder="" 
+            value={lotNumber}
+            onChange={handleLotNumberChange}
+          />
         </div>
         <div className="col-md-2">
           <label className="form-label">Part Code</label>
-          <input className="form-control" list="partCodes" placeholder="" />
-          <datalist id="partCodes">
-            {suggestions.partCodes.map(option => <option key={option} value={option} />)}
-          </datalist>
+          <input 
+            className="form-control" 
+            placeholder="" 
+            value={partCode}
+            onChange={handlePartCodeChange}
+          />
         </div>
         <div className="col-md-2">
           <label className="form-label">Sr. No.</label>
@@ -55,13 +69,13 @@ function PCBFrontend() {
             {suggestions.srNumbers.map(option => <option key={option} value={option} />)}
           </datalist>
         </div>
-        <div className="col-auto">
-          <button type="button" className="btn btn-secondary">Find</button>
-        </div>
-        <div className="col-auto d-flex align-items-center">
-          <input type="checkbox" className="form-check-input" id="lockCheck" />
-          <label htmlFor="lockCheck" className="form-check-label ms-1">Lock</label>
-        </div>
+          <div className="col-auto">
+            <button type="button" className="btn btn-secondary mt-2">Find</button>
+          </div>
+          <div className="col-auto d-flex align-items-center transform-translate-y-50">
+            <input type="checkbox" className="form-check-input" id="lockCheck" />
+            <label htmlFor="lockCheck" className="form-check-label ms-1">Lock</label>
+          </div>
       </form>
 
       {/* Tab Navigation */}
