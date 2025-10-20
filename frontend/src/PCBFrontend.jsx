@@ -5,8 +5,10 @@ function PCBFrontend() {
   const [activeTab, setActiveTab] = useState('tagentry');
   const [lotNumber, setLotNumber] = useState('');
   const [partCode, setPartCode] = useState('');
+  const [serialNumber, setSerialNumber] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [fetchStatus, setFetchStatus] = useState(null);
 
-  // State variables for tag entry fields
   const [tagEntryData, setTagEntryData] = useState({
     partCode: '',
     version: '',
@@ -29,14 +31,26 @@ function PCBFrontend() {
     setPartCode(e.target.value);
   };
 
-  const handleFind = async (e) => {
-    e.preventDefault();
+  const handleSerialNumberChange = (e) => {
+    const value = e.target.value;
+    setSerialNumber(value);
+    
+    if (fetchStatus) {
+      setFetchStatus(null);
+    }
+    
+    if (value.length >= 10) {
+      fetchData(lotNumber, partCode, value);
+    }
+  };
+
+  const fetchData = async (lotNum, partCod, srNo) => {
+    setIsLoading(true);
+    setFetchStatus(null);
     try {
-      // Replace with your actual API endpoint
-      const response = await fetch(`/api/data?lotNumber=${lotNumber}&partCode=${partCode}`);
+      const response = await fetch(`/api/data?lotNumber=${lotNum}&partCode=${partCod}&serialNumber=${srNo}`);
       if (response.ok) {
         const data = await response.json();
-        // Update the tag entry fields with fetched data
         setTagEntryData({
           partCode: data.partCode || '',
           version: data.version || '',
@@ -50,11 +64,41 @@ function PCBFrontend() {
           defect: data.defect || '',
           rfObservation: data.rfObservation || ''
         });
+        setFetchStatus('success');
       } else {
-        console.error('Failed to fetch data');
+        setFetchStatus('error');
+        setTagEntryData({
+          partCode: '',
+          version: '',
+          model: '',
+          ticket: '',
+          wolin: '',
+          barcode: '',
+          asp: '',
+          customerComplaint: '',
+          symtom: '',
+          defect: '',
+          rfObservation: ''
+        });
       }
     } catch (error) {
+      setFetchStatus('error');
+      setTagEntryData({
+        partCode: '',
+        version: '',
+        model: '',
+        ticket: '',
+        wolin: '',
+        barcode: '',
+        asp: '',
+        customerComplaint: '',
+        symtom: '',
+        defect: '',
+        rfObservation: ''
+      });
       console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,7 +117,6 @@ function PCBFrontend() {
 
   return (
     <div className="container-fluid py-4">
-      {/* Header Card */}
       <div className="card shadow-sm mb-4">
         <div className="card-header bg-primary text-white">
           <div className="d-flex justify-content-between align-items-center">
@@ -82,8 +125,7 @@ function PCBFrontend() {
           </div>
         </div>
         <div className="card-body">
-          {/* Find PCB Section (now "Lot no.") */}
-          <form autoComplete="on" className="row g-3 align-items-end" onSubmit={handleFind}>
+          <form autoComplete="on" className="row g-3 align-items-end">
             <div className="col-md-3">
               <label className="form-label fw-bold">Lot Number</label>
               <input 
@@ -106,15 +148,25 @@ function PCBFrontend() {
             </div>
             <div className="col-md-2">
               <label className="form-label fw-bold">Serial Number</label>
-              <input className="form-control form-control-lg" list="srNumbers" placeholder="Select Sr. No." />
+              <div className="input-group">
+                <input 
+                  className="form-control form-control-lg" 
+                  list="srNumbers" 
+                  placeholder="Min 10 characters" 
+                  value={serialNumber}
+                  onChange={handleSerialNumberChange}
+                />
+                {isLoading && (
+                  <span className="input-group-text">
+                    <div className="spinner-border spinner-border-sm" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </span>
+                )}
+              </div>
               <datalist id="srNumbers">
                 {suggestions.srNumbers.map(option => <option key={option} value={option} />)}
               </datalist>
-            </div>
-            <div className="col-auto">
-              <button type="submit" className="btn btn-primary btn-lg">
-                <i className="bi bi-search me-2"></i>Find PCB
-              </button>
             </div>
             <div className="col-auto">
               <div className="form-check form-switch">
@@ -126,7 +178,6 @@ function PCBFrontend() {
         </div>
       </div>
 
-      {/* Tab Navigation */}
       <div className="card shadow-sm mb-4">
         <div className="card-header">
           <ul className="nav nav-tabs card-header-tabs">
@@ -135,7 +186,7 @@ function PCBFrontend() {
                 className={`nav-link ${activeTab === 'tagentry' ? 'active' : ''}`} 
                 onClick={() => setActiveTab('tagentry')}
               >
-                <i className="bi bi-tag me-1"></i>PCB Info
+                <i className="bi bi-tag me-1"></i>Tag Entry
               </button>
             </li>
             <li className="nav-item">
@@ -157,144 +208,170 @@ function PCBFrontend() {
           </ul>
         </div>
 
-        {/* Tab Content */}
         <div className="card-body">
           {activeTab === 'tagentry' && (
             <div className="row g-3">
-              <div className="col-12">
-                <h5 className="card-title mb-4">PCB Tag Information</h5>
+              <div className="col-12 d-flex justify-content-between align-items-center">
+                <h5 className="card-title mb-0">PCB Tag Information</h5>
+                {fetchStatus === 'success' && (
+                  <div className="text-success">
+                    <i className="bi bi-check-circle-fill me-1"></i>
+                    Data loaded successfully
+                  </div>
+                )}
+                {fetchStatus === 'error' && (
+                  <div className="text-danger">
+                    <i className="bi bi-exclamation-circle-fill me-1"></i>
+                    Data not found for Serial Number: {serialNumber}
+                  </div>
+                )}
               </div>
               
-              <div className="col-md-6 col-lg-4">
-                <div className="form-floating">
-                  <input 
-                    className="form-control" 
-                    value={tagEntryData.partCode} 
-                    disabled 
-                    id="partCode"
-                  />
-                  <label htmlFor="partCode">Part Code</label>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-4">
-                <div className="form-floating">
-                  <input 
-                    className="form-control" 
-                    value={tagEntryData.version} 
-                    disabled 
-                    id="version"
-                  />
-                  <label htmlFor="version">Version</label>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-4">
-                <div className="form-floating">
-                  <input 
-                    className="form-control" 
-                    value={tagEntryData.model} 
-                    disabled 
-                    id="model"
-                  />
-                  <label htmlFor="model">Model</label>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-4">
-                <div className="form-floating">
-                  <input 
-                    className="form-control" 
-                    value={tagEntryData.ticket} 
-                    disabled 
-                    id="ticket"
-                  />
-                  <label htmlFor="ticket">Ticket</label>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-4">
-                <div className="form-floating">
-                  <input 
-                    className="form-control" 
-                    value={tagEntryData.wolin} 
-                    disabled 
-                    id="wolin"
-                  />
-                  <label htmlFor="wolin">WOLIN</label>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-4">
-                <div className="form-floating">
-                  <input 
-                    className="form-control" 
-                    value={tagEntryData.barcode} 
-                    disabled 
-                    id="barcode"
-                  />
-                  <label htmlFor="barcode">Barcode</label>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-4">
-                <div className="form-floating">
-                  <input 
-                    className="form-control" 
-                    value={tagEntryData.asp} 
-                    disabled 
-                    id="asp"
-                  />
-                  <label htmlFor="asp">ASP</label>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-4">
-                <div className="form-floating">
-                  <input 
-                    className="form-control" 
-                    value={tagEntryData.customerComplaint} 
-                    disabled 
-                    id="customerComplaint"
-                  />
-                  <label htmlFor="customerComplaint">Customer Complaint</label>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-4">
-                <div className="form-floating">
-                  <input 
-                    className="form-control" 
-                    value={tagEntryData.symtom} 
-                    disabled 
-                    id="symtom"
-                  />
-                  <label htmlFor="symtom">Symtom</label>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-4">
-                <div className="form-floating">
-                  <input 
-                    className="form-control" 
-                    value={tagEntryData.defect} 
-                    disabled 
-                    id="defect"
-                  />
-                  <label htmlFor="defect">Defect</label>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-4">
-                <div className="form-floating">
-                  <input 
-                    className="form-control" 
-                    value={tagEntryData.rfObservation} 
-                    disabled 
-                    id="rfObservation"
-                  />
-                  <label htmlFor="rfObservation">RF Observation</label>
-                </div>
+              <div className="col-12" style={{ minHeight: '400px' }}>
+                {isLoading ? (
+                  <div className="d-flex justify-content-center align-items-center h-100">
+                    <div className="text-center">
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                      <p className="mt-2">Fetching data...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="row g-3">
+                    <div className="col-md-6 col-lg-4">
+                      <div className="form-floating">
+                        <input 
+                          className="form-control" 
+                          value={tagEntryData.partCode} 
+                          disabled 
+                          id="partCode"
+                        />
+                        <label htmlFor="partCode">Part Code</label>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 col-lg-4">
+                      <div className="form-floating">
+                        <input 
+                          className="form-control" 
+                          value={tagEntryData.version} 
+                          disabled 
+                          id="version"
+                        />
+                        <label htmlFor="version">Version</label>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 col-lg-4">
+                      <div className="form-floating">
+                        <input 
+                          className="form-control" 
+                          value={tagEntryData.model} 
+                          disabled 
+                          id="model"
+                        />
+                        <label htmlFor="model">Model</label>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 col-lg-4">
+                      <div className="form-floating">
+                        <input 
+                          className="form-control" 
+                          value={tagEntryData.ticket} 
+                          disabled 
+                          id="ticket"
+                        />
+                        <label htmlFor="ticket">Ticket</label>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 col-lg-4">
+                      <div className="form-floating">
+                        <input 
+                          className="form-control" 
+                          value={tagEntryData.wolin} 
+                          disabled 
+                          id="wolin"
+                        />
+                        <label htmlFor="wolin">WOLIN</label>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 col-lg-4">
+                      <div className="form-floating">
+                        <input 
+                          className="form-control" 
+                          value={tagEntryData.barcode} 
+                          disabled 
+                          id="barcode"
+                        />
+                        <label htmlFor="barcode">Barcode</label>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 col-lg-4">
+                      <div className="form-floating">
+                        <input 
+                          className="form-control" 
+                          value={tagEntryData.asp} 
+                          disabled 
+                          id="asp"
+                        />
+                        <label htmlFor="asp">ASP</label>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 col-lg-4">
+                      <div className="form-floating">
+                        <input 
+                          className="form-control" 
+                          value={tagEntryData.customerComplaint} 
+                          disabled 
+                          id="customerComplaint"
+                        />
+                        <label htmlFor="customerComplaint">Customer Complaint</label>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 col-lg-4">
+                      <div className="form-floating">
+                        <input 
+                          className="form-control" 
+                          value={tagEntryData.symtom} 
+                          disabled 
+                          id="symtom"
+                        />
+                        <label htmlFor="symtom">Symtom</label>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 col-lg-4">
+                      <div className="form-floating">
+                        <input 
+                          className="form-control" 
+                          value={tagEntryData.defect} 
+                          disabled 
+                          id="defect"
+                        />
+                        <label htmlFor="defect">Defect</label>
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-6 col-lg-4">
+                      <div className="form-floating">
+                        <input 
+                          className="form-control" 
+                          value={tagEntryData.rfObservation} 
+                          disabled 
+                          id="rfObservation"
+                        />
+                        <label htmlFor="rfObservation">RF Observation</label>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
