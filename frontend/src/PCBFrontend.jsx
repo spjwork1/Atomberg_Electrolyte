@@ -6,7 +6,21 @@ function PCBFrontend() {
   const [lotNumber, setLotNumber] = useState('');
   const [partCode, setPartCode] = useState('');
 
-  // Handle input changes
+  // State variables for tag entry fields
+  const [tagEntryData, setTagEntryData] = useState({
+    partCode: '',
+    version: '',
+    model: '',
+    ticket: '',
+    wolin: '',
+    barcode: '',
+    asp: '',
+    customerComplaint: '',
+    symtom: '',
+    defect: '',
+    rfObservation: ''
+  });
+
   const handleLotNumberChange = (e) => {
     setLotNumber(e.target.value);
   };
@@ -15,8 +29,35 @@ function PCBFrontend() {
     setPartCode(e.target.value);
   };
 
-  // In production, suggestions would come from previously entered user data or a backend
-  // Here, keep suggestion arrays empty (no option elements rendered)
+  const handleFind = async (e) => {
+    e.preventDefault();
+    try {
+      // Replace with your actual API endpoint
+      const response = await fetch(`/api/data?lotNumber=${lotNumber}&partCode=${partCode}`);
+      if (response.ok) {
+        const data = await response.json();
+        // Update the tag entry fields with fetched data
+        setTagEntryData({
+          partCode: data.partCode || '',
+          version: data.version || '',
+          model: data.model || '',
+          ticket: data.ticket || '',
+          wolin: data.wolin || '',
+          barcode: data.barcode || '',
+          asp: data.asp || '',
+          customerComplaint: data.customerComplaint || '',
+          symtom: data.symtom || '',
+          defect: data.defect || '',
+          rfObservation: data.rfObservation || ''
+        });
+      } else {
+        console.error('Failed to fetch data');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
   const suggestions = {
     lotNumbers: [],
     partCodes: [],
@@ -31,151 +72,252 @@ function PCBFrontend() {
   };
 
   return (
-    <div className="my-4 p-4">
-      {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-2">
-        <h5>Atomberg</h5>
-      </div>
-
-      {/* Find PCB Section (now "Lot no.") */}
-      <form className="row align-items-end mb-3">
-        <div className="col-md-3">
-          <label className="form-label">Lot no.</label>
-          <input 
-            className="form-control" 
-            placeholder="" 
-            value={lotNumber}
-            onChange={handleLotNumberChange}
-          />
-        </div>
-        <div className="col-md-2">
-          <label className="form-label">Part Code</label>
-          <input 
-            className="form-control" 
-            placeholder="" 
-            value={partCode}
-            onChange={handlePartCodeChange}
-          />
-        </div>
-        <div className="col-md-2">
-          <label className="form-label">Sr. No.</label>
-          <input className="form-control" list="srNumbers" placeholder="" />
-          <datalist id="srNumbers">
-            {suggestions.srNumbers.map(option => <option key={option} value={option} />)}
-          </datalist>
-        </div>
-          <div className="col-auto">
-            <button type="button" className="btn btn-secondary mt-2">Find</button>
+    <div className="container-fluid py-4">
+      {/* Header Card */}
+      <div className="card shadow-sm mb-4">
+        <div className="card-header bg-primary text-white">
+          <div className="d-flex justify-content-between align-items-center">
+            <h4 className="mb-0">Atomberg Electrolyte Management</h4>
+            <span className="badge bg-light text-dark">PCB Tracking</span>
           </div>
-          <div className="col-auto d-flex align-items-center transform-translate-y-50">
-            <input type="checkbox" className="form-check-input" id="lockCheck" />
-            <label htmlFor="lockCheck" className="form-check-label ms-1">Lock</label>
-          </div>
-      </form>
-
-      {/* Tab Navigation */}
-      <ul className="nav nav-tabs mb-3">
-        <li className="nav-item">
-          <button className={`nav-link ${activeTab === 'tagentry' ? 'active' : ''}`} onClick={() => setActiveTab('tagentry')}>
-            Tag Entry
-          </button>
-        </li>
-        <li className="nav-item">
-          <button className={`nav-link ${activeTab === 'consumption' ? 'active' : ''}`} onClick={() => setActiveTab('consumption')}>
-            Consumption
-          </button>
-        </li>
-        <li className="nav-item">
-          <button className={`nav-link ${activeTab === 'setting' ? 'active' : ''}`} onClick={() => setActiveTab('setting')}>
-            Setting
-          </button>
-        </li>
-      </ul>
-
-      {/* Tab Content */}
-      {activeTab === 'tagentry' && (
-        <form className="p-3 rounded bg-light mb-3">
-          <div className="row mb-3">
-            <div className="col-md-4">
-              <label className="form-label">Sr. No.</label>
-              <input className="form-control" list="srNumbersInner" placeholder="" />
-              <datalist id="srNumbersInner">
-                {/* Render options only if array is populated */}
+        </div>
+        <div className="card-body">
+          {/* Find PCB Section (now "Lot no.") */}
+          <form autoComplete="on" className="row g-3 align-items-end" onSubmit={handleFind}>
+            <div className="col-md-3">
+              <label className="form-label fw-bold">Lot Number</label>
+              <input 
+                className="form-control form-control-lg" 
+                placeholder="Enter Lot Number" 
+                name='lotNumber'
+                value={lotNumber}
+                onChange={handleLotNumberChange}
+                autoComplete='on'
+              />
+            </div>
+            <div className="col-md-2">
+              <label className="form-label fw-bold">Part Code</label>
+              <input 
+                className="form-control form-control-lg" 
+                placeholder="Part Code" 
+                value={partCode}
+                onChange={handlePartCodeChange}
+              />
+            </div>
+            <div className="col-md-2">
+              <label className="form-label fw-bold">Serial Number</label>
+              <input className="form-control form-control-lg" list="srNumbers" placeholder="Select Sr. No." />
+              <datalist id="srNumbers">
                 {suggestions.srNumbers.map(option => <option key={option} value={option} />)}
               </datalist>
             </div>
-            <div className="col-md-4">
-              <label className="form-label">Date of Purchase</label>
-              <input type="date" className="form-control" />
+            <div className="col-auto">
+              <button type="submit" className="btn btn-primary btn-lg">
+                <i className="bi bi-search me-2"></i>Find PCB
+              </button>
             </div>
-            <div className="col-md-4">
-              <label className="form-label">Complaint No.</label>
-              <input className="form-control" list="complaintNo" placeholder="" />
-              <datalist id="complaintNo">
-                {suggestions.complaintNo.map(option => <option key={option} value={option} />)}
-              </datalist>
+            <div className="col-auto">
+              <div className="form-check form-switch">
+                <input className="form-check-input" type="checkbox" id="lockCheck" />
+                <label className="form-check-label fw-bold" htmlFor="lockCheck">Lock Data</label>
+              </div>
             </div>
-            <div className="col-md-4">
-              <label className="form-label">Branch</label>
-              <input className="form-control" list="branch" placeholder="" />
-              <datalist id="branch">
-                {suggestions.branch.map(option => <option key={option} value={option} />)}
-              </datalist>
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">BCCD Name</label>
-              <input className="form-control" list="bccdName" placeholder="" />
-              <datalist id="bccdName">
-                {suggestions.bccdName.map(option => <option key={option} value={option} />)}
-              </datalist>
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">Product Description</label>
-              <input className="form-control" list="productDescription" placeholder="" />
-              <datalist id="productDescription">
-                {suggestions.productDescription.map(option => <option key={option} value={option} />)}
-              </datalist>
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">Product Sr. No.</label>
-              <input className="form-control" list="productSrNo" placeholder="" />
-              <datalist id="productSrNo">
-                {suggestions.productSrNo.map(option => <option key={option} value={option} />)}
-              </datalist>
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">Nature of Defect</label>
-              <input className="form-control" list="defect" placeholder="" />
-              <datalist id="defect">
-                {suggestions.defect.map(option => <option key={option} value={option} />)}
-              </datalist>
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">Visiting Tech Name</label>
-              <input className="form-control" list="techNames" placeholder="" />
-              <datalist id="techNames">
-                {suggestions.techNames.map(option => <option key={option} value={option} />)}
-              </datalist>
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">Mfg. Month/Year</label>
-              <input type="month" className="form-control" />
-            </div>
-          </div>
-          <div className="row mb-3">
-            <div className="col-12">
-              <textarea className="form-control" rows="5" placeholder="Additional details..." />
-            </div>
-          </div>
-        </form>
-      )}
+          </form>
+        </div>
+      </div>
 
-      {activeTab === 'consumption' && (
-        <div className="p-5 text-center text-muted">No content yet.</div>
-      )}
-      {activeTab === 'setting' && (
-        <div className="p-5 text-center text-muted">No content yet.</div>
-      )}
+      {/* Tab Navigation */}
+      <div className="card shadow-sm mb-4">
+        <div className="card-header">
+          <ul className="nav nav-tabs card-header-tabs">
+            <li className="nav-item">
+              <button 
+                className={`nav-link ${activeTab === 'tagentry' ? 'active' : ''}`} 
+                onClick={() => setActiveTab('tagentry')}
+              >
+                <i className="bi bi-tag me-1"></i>PCB Info
+              </button>
+            </li>
+            <li className="nav-item">
+              <button 
+                className={`nav-link ${activeTab === 'consumption' ? 'active' : ''}`} 
+                onClick={() => setActiveTab('consumption')}
+              >
+                <i className="bi bi-graph-up me-1"></i>Consumption
+              </button>
+            </li>
+            <li className="nav-item">
+              <button 
+                className={`nav-link ${activeTab === 'setting' ? 'active' : ''}`} 
+                onClick={() => setActiveTab('setting')}
+              >
+                <i className="bi bi-gear me-1"></i>Settings
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        {/* Tab Content */}
+        <div className="card-body">
+          {activeTab === 'tagentry' && (
+            <div className="row g-3">
+              <div className="col-12">
+                <h5 className="card-title mb-4">PCB Tag Information</h5>
+              </div>
+              
+              <div className="col-md-6 col-lg-4">
+                <div className="form-floating">
+                  <input 
+                    className="form-control" 
+                    value={tagEntryData.partCode} 
+                    disabled 
+                    id="partCode"
+                  />
+                  <label htmlFor="partCode">Part Code</label>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-4">
+                <div className="form-floating">
+                  <input 
+                    className="form-control" 
+                    value={tagEntryData.version} 
+                    disabled 
+                    id="version"
+                  />
+                  <label htmlFor="version">Version</label>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-4">
+                <div className="form-floating">
+                  <input 
+                    className="form-control" 
+                    value={tagEntryData.model} 
+                    disabled 
+                    id="model"
+                  />
+                  <label htmlFor="model">Model</label>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-4">
+                <div className="form-floating">
+                  <input 
+                    className="form-control" 
+                    value={tagEntryData.ticket} 
+                    disabled 
+                    id="ticket"
+                  />
+                  <label htmlFor="ticket">Ticket</label>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-4">
+                <div className="form-floating">
+                  <input 
+                    className="form-control" 
+                    value={tagEntryData.wolin} 
+                    disabled 
+                    id="wolin"
+                  />
+                  <label htmlFor="wolin">WOLIN</label>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-4">
+                <div className="form-floating">
+                  <input 
+                    className="form-control" 
+                    value={tagEntryData.barcode} 
+                    disabled 
+                    id="barcode"
+                  />
+                  <label htmlFor="barcode">Barcode</label>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-4">
+                <div className="form-floating">
+                  <input 
+                    className="form-control" 
+                    value={tagEntryData.asp} 
+                    disabled 
+                    id="asp"
+                  />
+                  <label htmlFor="asp">ASP</label>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-4">
+                <div className="form-floating">
+                  <input 
+                    className="form-control" 
+                    value={tagEntryData.customerComplaint} 
+                    disabled 
+                    id="customerComplaint"
+                  />
+                  <label htmlFor="customerComplaint">Customer Complaint</label>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-4">
+                <div className="form-floating">
+                  <input 
+                    className="form-control" 
+                    value={tagEntryData.symtom} 
+                    disabled 
+                    id="symtom"
+                  />
+                  <label htmlFor="symtom">Symtom</label>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-4">
+                <div className="form-floating">
+                  <input 
+                    className="form-control" 
+                    value={tagEntryData.defect} 
+                    disabled 
+                    id="defect"
+                  />
+                  <label htmlFor="defect">Defect</label>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-4">
+                <div className="form-floating">
+                  <input 
+                    className="form-control" 
+                    value={tagEntryData.rfObservation} 
+                    disabled 
+                    id="rfObservation"
+                  />
+                  <label htmlFor="rfObservation">RF Observation</label>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'consumption' && (
+            <div className="text-center py-5">
+              <div className="alert alert-info">
+                <h5 className="alert-heading">Consumption Data</h5>
+                <p className="mb-0">Consumption tracking features coming soon.</p>
+              </div>
+            </div>
+          )}
+          
+          {activeTab === 'setting' && (
+            <div className="text-center py-5">
+              <div className="alert alert-info">
+                <h5 className="alert-heading">System Settings</h5>
+                <p className="mb-0">Configuration options will be available here.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
