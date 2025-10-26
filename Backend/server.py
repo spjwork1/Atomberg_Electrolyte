@@ -13,7 +13,7 @@ DB_CONFIG = {
     'port': 5432,
     'database': 'Atomberg_Electrolyte',  # CHANGE THIS
     'user': 'postgres',              # CHANGE THIS
-    'password': 'Rishbh@16o7'      # CHANGE THIS
+    'password': 'your password'      # CHANGE THIS
 }
 
 def get_db_connection():

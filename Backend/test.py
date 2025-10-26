@@ -228,7 +228,7 @@ def main():
         'port': 5432,
         'database': 'Atomberg_Electrolyte',  # CHANGE THIS
         'user': 'postgres',              # CHANGE THIS
-        'password': 'Rishbh@16o7'      # CHANGE THIS
+        'password': 'your password'      # CHANGE THIS
     }
     
     print("🚀 DATABASE PERFORMANCE TESTING TOOL")
